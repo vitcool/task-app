@@ -7,7 +7,8 @@ router.post('/users', async (req, res) => {
   const user = new User(req.body);
   try {
     await user.save();
-    res.status(201).send(user);
+    const token = await user.generateAuthToken();
+    res.status(201).send({ user, token });
   } catch (e) {
     res.status(400).send(e);
   }
@@ -44,9 +45,11 @@ router.patch('/users/:id', async (req, res) => {
   if (isValidUpdate) {
     const { id } = req.params;
     try {
-      const user = await User.findByIdAndUpdate(id, body, { new: true, runValidators: true });
+      const user = await User.findById(id);
 
       if (user) {
+        updates.forEach(update => user[update] = body[update]);
+        await user.save();
         return res.send(user);
       }
 
@@ -69,6 +72,18 @@ router.delete('/users/:id', async (req, res) => {
   } catch (e) {
     res.status(500).send(e);
   }
-})
+});
+
+router.post('/users/login', async (req, res) => {
+  const { body } = req;
+  const { email, password } = body;
+  try {
+    const user = await User.findByCredentials(email, password);
+    const token = await user.generateAuthToken();
+    res.send({ token, user });
+  } catch (e) {
+    res.status(400).send();
+  }
+});
 
 module.exports = router;
