@@ -16,26 +16,12 @@ router.post('/users', async (req, res) => {
   }
 });
 
-router.get('/users', auth, async (req, res) => {
+router.get('/users/me', auth, async (req, res) => {
   try {
-    const users = await User.find({});
-    res.send(users);
+    res.send(req.user);
   } catch (e) {
     res.status(500).send(e);
   };
-});
-
-router.get('/users/:id', async (req, res) => {
-  const _id = req.params.id;
-  try {
-    const user = await User.findById(_id);
-    if (user) {
-      return res.send(user);
-    }
-    res.status(404).send();
-  } catch (e) {
-    res.status(500).send(e);
-  }
 });
 
 router.patch('/users/:id', async (req, res) => {
@@ -63,14 +49,11 @@ router.patch('/users/:id', async (req, res) => {
   res.status(400).send();
 });
 
-router.delete('/users/:id', async (req, res) => {
-  const { id } = req.params;
+router.delete('/users/me', auth,  async (req, res) => {
+  const { _id } = req.user;
   try {
-    const user = await User.findByIdAndDelete(id);
-    if (user) {
-      return res.send(user);
-    }
-    res.status(404).send();
+    await req.user.remove();
+    res.send(req.user);
   } catch (e) {
     res.status(500).send(e);
   }
@@ -84,8 +67,31 @@ router.post('/users/login', async (req, res) => {
     const token = await user.generateAuthToken();
     res.send({ token, user });
   } catch (e) {
-    res.status(400).send();
+    res.status(400).send(e);
   }
 });
+
+router.post('/users/logout', auth, async (req, res) => {
+  try {
+    const newTokens = req.user.tokens.filter(token => token.token !== req.token);
+    req.user.tokens = newTokens;
+
+    await req.user.save();
+    res.send();
+  }
+  catch (e) { 
+    res.status(500).send();
+  }
+});
+
+router.post('/users/logoutAll', auth, async (req, res) => {
+  try {
+    req.user.tokens= [];
+    await req.user.save();
+    res.send();
+  } catch (e) {
+    res.status(500).send();
+  }
+})
 
 module.exports = router;
