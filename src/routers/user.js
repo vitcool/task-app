@@ -24,8 +24,8 @@ router.get('/users/me', auth, async (req, res) => {
   };
 });
 
-router.patch('/users/:id', async (req, res) => {
-  const { body } = req;
+router.patch('/users/me', auth, async (req, res) => {
+  const { body, user } = req;
   const updates = Object.keys(body);
   const allowedUpdates = ['name', 'email', 'password', 'age'];
   const isValidUpdate = updates.every(update => allowedUpdates.includes(update));
@@ -33,15 +33,9 @@ router.patch('/users/:id', async (req, res) => {
   if (isValidUpdate) {
     const { id } = req.params;
     try {
-      const user = await User.findById(id);
-
-      if (user) {
         updates.forEach(update => user[update] = body[update]);
-        await user.save();
-        return res.send(user);
-      } 
-
-      res.status(404).send();
+        await req.user.save();
+        return res.send(req.user);
     } catch (e) {
       res.status(400).send(e);
     }
