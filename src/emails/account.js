@@ -23,4 +23,4 @@ const removeAccountEmail = (email, name) => {
 module.exports = {
   sendWelcomeEmail,
   removeAccountEmail
-}
+};
