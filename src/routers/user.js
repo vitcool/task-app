@@ -112,7 +112,7 @@ router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res) 
   const buffer = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer();
   req.user.avatar = buffer;
   await req.user.save();
-  res.send(200);
+  res.sendStatus(200);
 }, (error, req, res, next) => {
   res.status(400).send({ error: error.message });
 });
@@ -141,7 +141,5 @@ router.get('/users/:id/avatar', async (req, res) => {
     res.status(400).send();
   }
 });
-
-
 
 module.exports = router;
